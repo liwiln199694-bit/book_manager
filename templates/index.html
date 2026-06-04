@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>我的圖書管理系統</title>
+    <style>
+        /* 更換背景圖片：使用 url_for 讀取 static 資料夾內的圖片 */
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 900px; 
+            margin: 40px auto; 
+            padding: 20px; 
+            background: url("{{ url_for('static', filename='SAM_0862.JPG') }}") no-repeat center center fixed;
+            background-size: cover; /* 讓圖片填滿整個螢幕 */
+        }
+        
+        /* 為了讓文字在背景圖上更清晰，幫主內容加上半透明白色底色 */
+        .container {
+            background: rgba(255, 255, 255, 0.92);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        form { background: #f8f9fa; padding: 20px; margin-bottom: 20px; border-radius: 5px; border: 1px solid #ddd; }
+        .form-group { margin-bottom: 15px; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; }
+        input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { background: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 3px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #0056b3; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .delete-btn { color: #dc3545; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📚 Gary的圖書管理系統</h1>
+
+    <form method="POST">
+        <h3>新增書籍</h3>
+        <div class="form-group">
+            <label>書名：</label>
+            <input type="text" name="title" required>
+        </div>
+        
+        <div class="form-group">
+            <label>作者：</label>
+            <input type="text" name="author" required>
+        </div>
+        
+        <div class="form-group">
+            <label>ISBN：</label>
+            <input type="text" name="isbn">
+        </div>
+
+        <div class="form-group">
+            <label>出版社：</label>
+            <input type="text" name="publisher">
+        </div>
+
+        <div class="form-group">
+            <label>數量：</label>
+            <input type="number" name="quantity" min="1" value="1" required>
+        </div>
+        
+        <button type="submit">儲存書籍</button>
+    </form>
+
+    <h3>目前館藏</h3>
+    <div style="margin: 30px 0 10px 0;">
+        <form method="GET" action="{{ url_for('index') }}" style="background: #e9ecef; display: flex; gap: 10px; align-items: center; padding: 15px;">
+            <input type="text" name="search" value="{{ search_query }}" placeholder="輸入書名、作者、出版社或 ISBN 搜尋..." style="margin: 0; flex: 1;">
+            <button type="submit" style="background: #495057; margin: 0;">🔍 搜尋</button>
+            {% if search_query %}
+                <a href="{{ url_for('index') }}" style="color: #6c757d; text-decoration: none; font-size: 14px;">清除搜尋</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <h3>目前館藏</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>書名</th>
+                <th>作者</th>
+                <th>ISBN</th>
+                <th>出版社</th> <th>數量</th>   <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for book in books %}
+            <tr>
+                <td>{{ book.id }}</td>
+                <td>{{ book.title }}</td>
+                <td>{{ book.author }}</td>
+                <td>{{ book.isbn or '-' }}</td>
+                <td>{{ book.publisher or '-' }}</td> <td>{{ book.quantity }}</td>         <td>
+                    <a href="{{ url_for('delete_book', book_id=book.id) }}" class="delete-btn" onclick="return confirm('確定要刪除嗎？')">刪除</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" style="text-align: center;">目前沒有任何藏書。</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>
