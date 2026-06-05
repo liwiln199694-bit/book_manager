@@ -23,6 +23,8 @@ class Book(db.Model):
     isbn = db.Column(db.String(20), nullable=True)        # ISBN 碼 (不可重複)
     publisher = db.Column(db.String(120))               # 出版商
     quantity = db.Column(db.Integer, default=1)         # 數量
+    translator = db.Column(db.String(50))               # ✨ 新增：譯者欄位
+
 # 建立資料庫檔案 (初次執行時啟動)
 with app.app_context():
     db.create_all()
@@ -37,11 +39,13 @@ def index():
         book_isbn = request.form.get('isbn') or None
         book_publisher = request.form.get('publisher') or None    # 獲取表單的出版社
         book_quantity = request.form.get('quantity')      # 獲取表單的數量
-        
+        book_translator = request.form.get('translator') or None  # ✨ 新增：獲取表單的譯者
+
         # 建立新書籍物件並存入資料庫
         new_book = Book(
             title=book_title, 
             author=book_author, 
+            translator=book_translator,  # ✨ 新增：將譯者資料存入資料庫
             isbn=book_isbn,
             publisher=book_publisher,
             quantity=int(book_quantity) if book_quantity else 1
@@ -61,7 +65,8 @@ def index():
                 Book.title.like(f"%{search_query}%"),
                 Book.author.like(f"%{search_query}%"),
                 Book.publisher.like(f"%{search_query}%"),
-                Book.isbn.like(f"%{search_query}%")
+                Book.isbn.like(f"%{search_query}%"),
+                Book.translator.like(f"%{search_query}%")
             )
         ).all()
     else:
@@ -81,7 +86,44 @@ def delete_book(book_id):
     db.session.delete(book_to_delete)
     db.session.commit()
     return redirect(url_for('index'))
+# ✨ 新增：匯出 Excel 功能
+@app.route('/export_excel')
+def export_excel():
+    import pandas as pd
+    import io
+    from flask import Response
 
+    # 1. 從資料庫撈出所有書籍資料
+    all_books = Book.query.all()
+    
+    # 2. 將資料整理成 Python 字典清單
+    books_data = []
+    for b in all_books:
+        books_data.append({
+            "書籍 ID": b.id,
+            "書名": b.title,
+            "作者": b.author,
+            "譯者": b.translator or '-',
+            "ISBN": b.isbn or '-',
+            "出版社": b.publisher or '-',
+            "數量": b.quantity
+        })
+    
+    # 3. 使用 pandas 轉換成 DataFrame 格式
+    df = pd.DataFrame(books_data)
+    
+    # 4. 在記憶體中建立一個 Excel 檔案（不佔用硬體空間）
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='館藏清單')
+    output.seek(0)
+    
+    # 5. 設定瀏覽器下載回應，指定檔名為 book_list.xlsx
+    return Response(
+        output.getvalue(),
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment;filename=book_list.xlsx"}
+    )
 if __name__ == '__main__':
     # 加入 port 參數，改為你喜歡的數字（通常建議在 1024 ~ 65535 之間）
     app.run(debug=True, port=1996)

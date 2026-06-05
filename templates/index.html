@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>我的圖書管理系統</title>
+    <title>gary的圖書管理系統</title>
     <style>
         /* 更換背景圖片：使用 url_for 讀取 static 資料夾內的圖片 */
         body { 
@@ -51,15 +51,20 @@
             <label>作者：</label>
             <input type="text" name="author" required>
         </div>
-        
+
         <div class="form-group">
-            <label>ISBN：</label>
-            <input type="text" name="isbn">
+    <label>譯者：</label>
+    <input type="text" name="translator">
         </div>
 
         <div class="form-group">
             <label>出版社：</label>
             <input type="text" name="publisher">
+        </div>
+        
+                <div class="form-group">
+            <label>ISBN：</label>
+            <input type="text" name="isbn">
         </div>
 
         <div class="form-group">
@@ -70,10 +75,10 @@
         <button type="submit">儲存書籍</button>
     </form>
 
-    <h3>目前館藏</h3>
+    <h3>書籍搜尋</h3>
     <div style="margin: 30px 0 10px 0;">
         <form method="GET" action="{{ url_for('index') }}" style="background: #e9ecef; display: flex; gap: 10px; align-items: center; padding: 15px;">
-            <input type="text" name="search" value="{{ search_query }}" placeholder="輸入書名、作者、出版社或 ISBN 搜尋..." style="margin: 0; flex: 1;">
+            <input type="text" name="search" value="{{ search_query }}" placeholder="輸入書名、作者、譯者、出版社或 ISBN 搜尋..." style="margin: 0; flex: 1;">
             <button type="submit" style="background: #495057; margin: 0;">🔍 搜尋</button>
             {% if search_query %}
                 <a href="{{ url_for('index') }}" style="color: #6c757d; text-decoration: none; font-size: 14px;">清除搜尋</a>
@@ -81,15 +86,20 @@
         </form>
     </div>
 
-    <h3>目前館藏</h3>
+    <h3>書籍列表</h3>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px;">
+        <h3 style="margin: 0;">書籍列表</h3>
+        <a href="{{ url_for('export_excel') }}" style="background-color: #1d7343; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 14px;">📊 匯出 Excel 檔案</a>
+    </div>
     <table>
         <thead>
             <tr>
                 <th>ID</th>
                 <th>書名</th>
                 <th>作者</th>
-                <th>ISBN</th>
-                <th>出版社</th> <th>數量</th>   <th>操作</th>
+                <th>譯者</th>
+                <th>出版社</th>
+                <th>ISBN</th> <th>數量</th>   <th>操作</th>
             </tr>
         </thead>
         <tbody>
@@ -98,6 +108,7 @@
                 <td>{{ book.id }}</td>
                 <td>{{ book.title }}</td>
                 <td>{{ book.author }}</td>
+                <td>{{ book.translator or '-' }}</td>
                 <td>{{ book.isbn or '-' }}</td>
                 <td>{{ book.publisher or '-' }}</td> <td>{{ book.quantity }}</td>         <td>
                     <a href="{{ url_for('delete_book', book_id=book.id) }}" class="delete-btn" onclick="return confirm('確定要刪除嗎？')">刪除</a>
@@ -105,7 +116,7 @@
             </tr>
             {% else %}
             <tr>
-                <td colspan="7" style="text-align: center;">目前沒有任何藏書。</td>
+                <td colspan="8" style="text-align: center;">目前沒有任何藏書。</td>
             </tr>
             {% endfor %}
         </tbody>
