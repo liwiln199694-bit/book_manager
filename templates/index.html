@@ -25,7 +25,7 @@
         label { font-weight: bold; display: block; margin-bottom: 5px; }
         input[type="text"], input[type="number"] { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
         
-        /* 複選框區域網格化排版 */
+        /* 複選框網格化排版 */
         .checkbox-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
@@ -42,7 +42,7 @@
             gap: 5px;
             cursor: pointer;
             margin: 0;
-            white-space: nowrap; /* 防止文字換行斷開 */
+            white-space: nowrap; 
         }
 
         button { background: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 3px; cursor: pointer; font-size: 16px; }
@@ -86,7 +86,7 @@
             <label>書籍類別（可多選）：</label>
             <div class="checkbox-grid">
                 <label><input type="checkbox" name="category" value="哲學"> 哲學</label>
-                <label><input type="checkbox" name="category" value="精神分析"> 精神分析</label>
+                <label><input type="checkbox" name="category" value="政治"> 政治</label> <label><input type="checkbox" name="category" value="精神分析"> 精神分析</label>
                 <label><input type="checkbox" name="category" value="心理學"> 心理學</label>
                 <label><input type="checkbox" name="category" value="社會學"> 社會學</label>
                 <label><input type="checkbox" name="category" value="科技／AI"> 科技／AI</label>

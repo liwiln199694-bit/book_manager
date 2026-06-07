@@ -23,7 +23,7 @@ class Book(db.Model):
     quantity = db.Column(db.Integer, default=1)         
     translator = db.Column(db.String(50))               
     status = db.Column(db.String(20), nullable=False, default='未完成閱讀') 
-    category = db.Column(db.String(200), nullable=True) # 書籍類別欄位 (儲存如 "心理學,外語書")
+    category = db.Column(db.String(200), nullable=True) # 儲存多選類別字串
 
 with app.app_context():
     db.create_all()
@@ -38,9 +38,8 @@ def index():
         book_quantity = request.form.get('quantity')      
         book_translator = request.form.get('translator') or None  
         
-        # 獲取前端複選框的陣列資料
+        # 獲取多選類別
         selected_categories = request.form.getlist('category')
-        # 用逗號將多個類別串接起來，若沒勾選則存入 '-'
         book_category = ",".join(selected_categories) if selected_categories else '-'
 
         new_book = Book(
@@ -69,7 +68,7 @@ def index():
                 Book.isbn.like(f"%{search_query}%"),
                 Book.translator.like(f"%{search_query}%"),
                 Book.status.like(f"%{search_query}%"),
-                Book.category.like(f"%{search_query}%") # 支援搜尋書籍類別（如搜尋：外語書）
+                Book.category.like(f"%{search_query}%")
             )
         ).all()
     else:
@@ -130,7 +129,6 @@ def export_excel():
     ws['A1'] = "Gary的圖書管理資料"
     ws['A1'].font = Font(size=16, bold=True)
 
-    # 日期對齊 J1 (第 10 欄)
     today_str = f"匯出日期: {datetime.now().strftime('%Y-%m-%d')}"
     ws['J1'] = today_str
     ws['J1'].font = Font(size=10, italic=True)
