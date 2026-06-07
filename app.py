@@ -1,8 +1,11 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
+
+# ✨ 新增：Session 加密金鑰（隨便輸入一串複雜的文字即可）
+app.config['SECRET_KEY'] = 'gary_secret_key_1996_secure'
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'books.db')
@@ -12,6 +15,9 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
+
+# ✨ 新增：設定你的系統登入密碼（你可以自行修改引號內的文字）
+ADMIN_PASSWORD = "garylai55330310"
 
 # 定義資料庫欄位
 class Book(db.Model):
@@ -23,13 +29,37 @@ class Book(db.Model):
     quantity = db.Column(db.Integer, default=1)         
     translator = db.Column(db.String(50))               
     status = db.Column(db.String(20), nullable=False, default='未完成閱讀') 
-    category = db.Column(db.String(200), nullable=True) # 儲存多選類別字串
+    category = db.Column(db.String(200), nullable=True) 
 
 with app.app_context():
     db.create_all()
 
+# ✨ 新增路由：登入頁面
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = None
+    if request.method == 'POST':
+        input_password = request.form.get('password')
+        if input_password == ADMIN_PASSWORD:
+            session['logged_in'] = True  # 在 session 中記錄登入狀態
+            return redirect(url_for('index'))
+        else:
+            error = "密碼錯誤，請再試一次！"
+    return render_template('login.html', error=error)
+
+# ✨ 新增路由：登出功能
+@app.route('/logout')
+def logout():
+    session.pop('logged_in', None)  # 清除登入狀態
+    return redirect(url_for('login'))
+
+# 路由 1：首頁（加入權限檢查）
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    # ✨ 檢查是否登入，未登入則強制踢回登入頁
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+
     if request.method == 'POST':
         book_title = request.form.get('title')
         book_author = request.form.get('author')
@@ -38,7 +68,6 @@ def index():
         book_quantity = request.form.get('quantity')      
         book_translator = request.form.get('translator') or None  
         
-        # 獲取多選類別
         selected_categories = request.form.getlist('category')
         book_category = ",".join(selected_categories) if selected_categories else '-'
 
@@ -57,7 +86,6 @@ def index():
         return redirect(url_for('index'))
         
     search_query = request.args.get('search', '')
-    
     if search_query:
         from sqlalchemy import or_
         all_books = Book.query.filter(
@@ -76,8 +104,12 @@ def index():
         
     return render_template('index.html', books=all_books, search_query=search_query)
 
+# 路由 2：點擊更新/切換閱讀狀態（加入權限檢查）
 @app.route('/toggle_status/<int:book_id>')
 def toggle_status(book_id):
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+        
     book = Book.query.get_or_404(book_id)
     if book.status == '未完成閱讀':
         book.status = '已完成閱讀'
@@ -86,15 +118,23 @@ def toggle_status(book_id):
     db.session.commit()
     return redirect(url_for('index'))
 
+# 路由 3：刪除書籍（加入權限檢查）
 @app.route('/delete/<int:book_id>')
 def delete_book(book_id):
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+        
     book_to_delete = Book.query.get_or_404(book_id)
     db.session.delete(book_to_delete)
     db.session.commit()
     return redirect(url_for('index'))
 
+# 路由 4：匯出 Excel 功能（加入權限檢查）
 @app.route('/export_excel')
 def export_excel():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+        
     import pandas as pd
     import io
     from flask import Response
@@ -103,7 +143,6 @@ def export_excel():
     from openpyxl.styles import Font, Alignment
 
     all_books = Book.query.all()
-    
     books_data = []
     for b in all_books:
         books_data.append({
@@ -120,7 +159,6 @@ def export_excel():
         })
     
     df = pd.DataFrame(books_data)
-    
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "館藏清單"

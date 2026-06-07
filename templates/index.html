@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Gary的圖書管理系統</title>
+    
     <style>
         body { 
             font-family: Arial, sans-serif; 
@@ -65,6 +66,9 @@
 <div class="container">
     <h1>📚 Gary的圖書管理系統</h1>
 
+<div style="text-align: right; margin-top: -50px; margin-bottom: 20px;">
+    <a href="{{ url_for('logout') }}" style="background-color: #6c757d; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: bold;">🔒 登出系統</a>
+</div>
     <form method="POST">
         <h3>新增書籍</h3>
         <div class="form-group">
