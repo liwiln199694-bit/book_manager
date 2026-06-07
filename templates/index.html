@@ -2,19 +2,17 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>gary的圖書管理系統</title>
+    <title>Gary的圖書管理系統</title>
     <style>
-        /* 更換背景圖片：使用 url_for 讀取 static 資料夾內的圖片 */
         body { 
             font-family: Arial, sans-serif; 
-            max-width: 900px; 
+            max-width: 1000px; 
             margin: 40px auto; 
             padding: 20px; 
             background: url("{{ url_for('static', filename='SAM_0862.JPG') }}") no-repeat center center fixed;
-            background-size: cover; /* 讓圖片填滿整個螢幕 */
+            background-size: cover; 
         }
         
-        /* 為了讓文字在背景圖上更清晰，幫主內容加上半透明白色底色 */
         .container {
             background: rgba(255, 255, 255, 0.92);
             padding: 30px;
@@ -25,14 +23,22 @@
         form { background: #f8f9fa; padding: 20px; margin-bottom: 20px; border-radius: 5px; border: 1px solid #ddd; }
         .form-group { margin-bottom: 15px; }
         label { font-weight: bold; display: block; margin-bottom: 5px; }
-        input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        
         button { background: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 3px; cursor: pointer; font-size: 16px; }
         button:hover { background: #0056b3; }
         
         table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
         th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
         th { background-color: #f2f2f2; }
-        .delete-btn { color: #dc3545; text-decoration: none; font-weight: bold; }
+        .text-center { text-align: center; }
+        
+        /* 按鈕樣式 */
+        .action-btn { text-decoration: none; font-weight: bold; padding: 4px 8px; border-radius: 4px; font-size: 13px; margin-right: 5px; }
+        .status-btn { background-color: #17a2b8; color: white; }
+        .status-btn:hover { background-color: #138496; }
+        .delete-btn { background-color: #dc3545; color: white; }
+        .delete-btn:hover { background-color: #bd2130; }
     </style>
 </head>
 <body>
@@ -53,8 +59,8 @@
         </div>
 
         <div class="form-group">
-    <label>譯者：</label>
-    <input type="text" name="translator">
+            <label>譯者：</label>
+            <input type="text" name="translator">
         </div>
 
         <div class="form-group">
@@ -62,7 +68,7 @@
             <input type="text" name="publisher">
         </div>
         
-                <div class="form-group">
+        <div class="form-group">
             <label>ISBN：</label>
             <input type="text" name="isbn">
         </div>
@@ -78,7 +84,7 @@
     <h3>書籍搜尋</h3>
     <div style="margin: 30px 0 10px 0;">
         <form method="GET" action="{{ url_for('index') }}" style="background: #e9ecef; display: flex; gap: 10px; align-items: center; padding: 15px;">
-            <input type="text" name="search" value="{{ search_query }}" placeholder="輸入書名、作者、譯者、出版社或 ISBN 搜尋..." style="margin: 0; flex: 1;">
+            <input type="text" name="search" value="{{ search_query }}" placeholder="輸入書名、作者、譯者、出版社、ISBN 或狀態搜尋..." style="margin: 0; flex: 1;">
             <button type="submit" style="background: #495057; margin: 0;">🔍 搜尋</button>
             {% if search_query %}
                 <a href="{{ url_for('index') }}" style="color: #6c757d; text-decoration: none; font-size: 14px;">清除搜尋</a>
@@ -86,7 +92,6 @@
         </form>
     </div>
 
-    <h3>書籍列表</h3>
     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px;">
         <h3 style="margin: 0;">書籍列表</h3>
         <a href="{{ url_for('export_excel') }}" style="background-color: #1d7343; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 14px;">📊 匯出 Excel 檔案</a>
@@ -99,7 +104,11 @@
                 <th>作者</th>
                 <th>譯者</th>
                 <th>出版社</th>
-                <th>ISBN</th> <th>數量</th>   <th>操作</th>
+                <th>ISBN</th> 
+                <th>數量</th>   
+                <th>未完成閱讀</th> 
+                <th>已完成閱讀</th> 
+                <th>操作</th>
             </tr>
         </thead>
         <tbody>
@@ -109,14 +118,19 @@
                 <td>{{ book.title }}</td>
                 <td>{{ book.author }}</td>
                 <td>{{ book.translator or '-' }}</td>
+                <td>{{ book.publisher or '-' }}</td> 
                 <td>{{ book.isbn or '-' }}</td>
-                <td>{{ book.publisher or '-' }}</td> <td>{{ book.quantity }}</td>         <td>
-                    <a href="{{ url_for('delete_book', book_id=book.id) }}" class="delete-btn" onclick="return confirm('確定要刪除嗎？')">刪除</a>
+                <td>{{ book.quantity }}</td>         
+                <td class="text-center">{% if book.status == '未完成閱讀' %}V{% else %}-{% endif %}</td> 
+                <td class="text-center">{% if book.status == '已完成閱讀' %}V{% else %}-{% endif %}</td> 
+                <td>
+                    <a href="{{ url_for('toggle_status', book_id=book.id) }}" class="action-btn status-btn">🔄 切換狀態</a>
+                    <a href="{{ url_for('delete_book', book_id=book.id) }}" class="action-btn delete-btn" onclick="return confirm('確定要刪除嗎？')">刪除</a>
                 </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="8" style="text-align: center;">目前沒有任何藏書。</td>
+                <td colspan="10" style="text-align: center;">目前沒有任何藏書。</td>
             </tr>
             {% endfor %}
         </tbody>
